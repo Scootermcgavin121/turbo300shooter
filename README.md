@@ -4,7 +4,7 @@ A retro-style space shooter game where Baby Turbo battles through the crypto tre
 
 ## Play the Game
 
-[Play Baby Turbo vs. The Trenches](https://yourusername.github.io/baby-turbo-game/)
+[Play Baby Turbo vs. The Trenches](https://Scootermcgavin121.github.io/baby-turbo-game/)
 
 ## Game Features
 
@@ -54,4 +54,4 @@ The game uses Supabase for the leaderboard functionality. To set up your own lea
 
 ## Credits
 
-Created by [Your Name] 
+Created by Scooter 
