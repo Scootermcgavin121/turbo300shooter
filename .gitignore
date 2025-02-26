@@ -1,0 +1,25 @@
+# Ignore Supabase configuration with sensitive keys
+supabase-config.js
+
+# Ignore environment variables
+.env
+
+# Ignore logs
+*.log
+
+# Ignore macOS system files
+.DS_Store
+
+# Ignore editor-specific files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Ignore npm dependencies if you add them later
+node_modules/
+package-lock.json
+
+# Ignore build files if you add a build process later
+dist/
+build/ 
