@@ -4,7 +4,7 @@ A retro-style space shooter game where Baby Turbo battles through the crypto tre
 
 ## Play the Game
 
-[Play Baby Turbo vs. The Trenches](https://Scootermcgavin121.github.io/baby-turbo-game/)
+[Play Baby Turbo vs. The Trenches](https://scootermcgavin121.github.io/turbo300shooter/)
 
 ## Game Features
 
