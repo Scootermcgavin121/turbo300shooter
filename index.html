@@ -9,29 +9,149 @@
     <!-- Load Supabase directly from CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/dist/umd/supabase.min.js"></script>
     
-    <!-- Initialize Supabase client directly in HTML -->
     <script>
-        // This will make the createClient function globally available
-        window.createClient = supabase.createClient;
+        // Initialize control variables
+        window.leftPressed = false;
+        window.rightPressed = false;
+        window.firePressed = false;
+        
+        // Function to restart the game by reloading the page
+        function restartGame() {
+            console.log("Reloading page to restart game");
+            location.reload();
+        }
+        
+        // Check game state periodically to show/hide restart button
+        setInterval(function() {
+            const restartBtn = document.getElementById('restartButton');
+            console.log("Current game state:", window.gameState);
+            
+            if (window.gameState === "game over") {
+                console.log("Game over detected, showing restart button");
+                restartBtn.style.display = "block";
+            } else {
+                restartBtn.style.display = "none";
+            }
+        }, 500); // Check every half second
     </script>
     
     <script src="supabase-config.js"></script>
     <script src="sketch.js"></script>
+    
     <style>
         body {
             margin: 0;
             padding: 0;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
+            justify-content: flex-start;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
             background-color: #222;
+            position: relative;
         }
         canvas {
             display: block;
+            margin: 20px 0;
+        }
+        .game-controls {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+            padding: 10px;
+            margin-bottom: 10px;
+            background: transparent;
+            border-radius: 10px;
+            z-index: 1000;
+        }
+        .game-btn {
+            padding: 15px 30px;
+            font-size: 24px;
+            background: #444;
+            border: 3px solid #666;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.1s;
+            position: relative;
+        }
+        .game-btn:hover {
+            background: #555;
+            transform: translateY(-2px);
+        }
+        .game-btn:active {
+            background: #666;
+            transform: translateY(1px);
+        }
+        #fireButton {
+            background: #662222;
+            border-color: #883333;
+        }
+        #fireButton:hover {
+            background: #773333;
+        }
+        #fireButton:active {
+            background: #884444;
+        }
+        .key-hint {
+            position: absolute;
+            bottom: -20px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 12px;
+            color: #aaa;
+        }
+        #restartButton {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px 30px;
+            font-size: 24px;
+            background: #4CAF50;
+            border: 3px solid #45a049;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            z-index: 2000;
+            display: none; /* Hidden by default */
+        }
+        #restartButton:hover {
+            background: #45a049;
         }
     </style>
 </head>
 <body>
+    <div class="game-controls">
+        <button class="game-btn" id="leftButton" 
+                onmousedown="window.leftPressed = true" 
+                onmouseup="window.leftPressed = false" 
+                onmouseleave="window.leftPressed = false">
+            ← LEFT
+            <span class="key-hint">← key</span>
+        </button>
+        <button class="game-btn" id="rightButton"
+                onmousedown="window.rightPressed = true" 
+                onmouseup="window.rightPressed = false" 
+                onmouseleave="window.rightPressed = false">
+            RIGHT →
+            <span class="key-hint">→ key</span>
+        </button>
+        <button class="game-btn" id="fireButton"
+                onmousedown="window.firePressed = true" 
+                onmouseup="window.firePressed = false" 
+                onmouseleave="window.firePressed = false">
+            FIRE!
+            <span class="key-hint">SPACE</span>
+        </button>
+    </div>
+    
+    <!-- Simple restart button at the bottom center -->
+    <button id="restartButton" onclick="restartGame()">RESTART</button>
 </body>
 </html>

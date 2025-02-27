@@ -16,9 +16,15 @@ A retro-style space shooter game where Baby Turbo battles through the crypto tre
 
 ## Controls
 
+### Keyboard
 - **Left/Right Arrow Keys**: Move Baby Turbo
 - **Space**: Fire
 - **Enter**: Confirm/Restart (on game over screen)
+
+### Mobile/Touch
+- **Left/Right Buttons**: Move Baby Turbo
+- **Fire Button**: Shoot
+- **Tap Screen**: Confirm/Restart (on game over screen)
 
 ## Setup Instructions
 

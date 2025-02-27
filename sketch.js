@@ -43,11 +43,11 @@ const CONSOLE_NAME = "TURBO 3000";
 const ENEMY_BULLET_SPEED = 3; // Reduced from the default speed
 
 // Add Supabase configuration variables
-const SUPABASE_URL = "YOUR_SUPABASE_URL";
-const SUPABASE_KEY = "YOUR_SUPABASE_ANON_KEY";
+const SUPABASE_URL = "https://uvrqckecrensqyhsghli.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV2cnFja2VjcmVuc3F5aHNnaGxpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDA1NDgyODksImV4cCI6MjA1NjEyNDI4OX0.CJ4VgbAFmSy5NgpfX8rAP26NVLUwc1s1TSnoaXlzwsc";
 let supabase = null;
 let leaderboard = [];
-let isLoadingLeaderboard = false;
+let isLoadingLeaderboard = true; // Flag to track if leaderboard is loading
 
 // Game states and variables
 let gameState = "start";
@@ -120,6 +120,82 @@ const MAX_NAME_LENGTH = 20;
 // Add a variable to track how long the game over screen has been shown
 let gameOverTimer = 0;
 const MIN_GAME_OVER_DURATION = 300; // 5 seconds at 60fps
+
+// Global variables for game state
+window.gameState = "start";
+window.leftPressed = false;
+window.rightPressed = false;
+window.firePressed = false;
+
+// Add this at the top of sketch.js, right after the global variables
+window.forceRestartGame = function() {
+  console.log("Force restarting game");
+  
+  // First reset to start screen
+  updateGameState("start");
+  
+  // Then immediately transition to playing
+  setTimeout(function() {
+    updateGameState("playing");
+    
+    // Reset all game variables
+    score = 0;
+    lives = STARTING_LIVES;
+    waveNumber = 1;
+    enemyDirection = 1;
+    player = new Player();
+    enemies = [];
+    playerBullets = [];
+    enemyBullets = [];
+    powerups = [];
+    activePowerups = [];
+    combo = 0;
+    comboTimer = 0;
+    memeTexts = [];
+    gameShakeAmount = 0;
+    isEnteringName = false;
+    nameEntryComplete = false;
+    playerName = "";
+    gameOverTimer = 0;
+    
+    // Initialize the first wave
+    initializeWave();
+  }, 10); // Short delay to ensure state change is processed
+};
+
+// Add this at the top of your sketch.js file, right after the global variables
+window.hardRestart = function() {
+  console.log("Hard restart triggered");
+  
+  // Force reset all game state variables
+  updateGameState("start");
+  score = 0;
+  lives = STARTING_LIVES;
+  waveNumber = 1;
+  enemyDirection = 1;
+  player = new Player();
+  enemies = [];
+  playerBullets = [];
+  enemyBullets = [];
+  powerups = [];
+  activePowerups = [];
+  combo = 0;
+  comboTimer = 0;
+  memeTexts = [];
+  gameShakeAmount = 0;
+  isEnteringName = false;
+  nameEntryComplete = false;
+  playerName = "";
+  gameOverTimer = 0;
+  
+  // Initialize the first wave
+  initializeWave();
+  
+  // Force transition to playing state after a short delay
+  setTimeout(function() {
+    updateGameState("playing");
+  }, 100);
+};
 
 // **Player Class**
 class Player {
@@ -285,23 +361,22 @@ class Player {
   }
 
   move() {
-    if (keyIsDown(LEFT_ARROW)) { // Left arrow
+    // Use window to access global variables
+    if (keyIsDown(LEFT_ARROW) || window.leftPressed) {
       this.x -= this.speed;
     }
-    if (keyIsDown(RIGHT_ARROW)) { // Right arrow
+    if (keyIsDown(RIGHT_ARROW) || window.rightPressed) {
       this.x += this.speed;
     }
     this.x = constrain(this.x, this.width / 2, CANVAS_WIDTH - this.width / 2);
   }
 
   shoot() {
-    if (keyIsDown(32) && this.cooldown === 0) { // Space bar
+    if ((keyIsDown(32) || window.firePressed) && this.cooldown === 0) {
       if (this.tripleShot) {
         playerBullets.push(new PlayerBullet(this.x, this.y - this.height / 2));
         playerBullets.push(new PlayerBullet(this.x - 10, this.y - this.height / 3, -0.3));
         playerBullets.push(new PlayerBullet(this.x + 10, this.y - this.height / 3, 0.3));
-        
-        // Add screen shake for more impact
         gameShakeAmount = 3;
       } else {
         playerBullets.push(new PlayerBullet(this.x, this.y - this.height / 2));
@@ -362,7 +437,7 @@ class Player {
           this.invincibilityTimer = INVINCIBILITY_DURATION;
           
           if (lives <= 0) {
-            gameState = "game over";
+            updateGameState("game over");
             // Update high score
             if (score > highScore) {
               highScore = score;
@@ -1055,28 +1130,83 @@ function setup() {
   // Initialize Supabase with better error handling
   try {
     console.log("Attempting to initialize Supabase...");
-    const supabaseInitialized = initSupabase();
-    if (supabaseInitialized) {
-      console.log("Supabase initialized successfully, testing connection...");
+    
+    // Check if supabaseConfig is available from the imported file
+    if (typeof supabaseConfig !== 'undefined' && typeof createClient === 'function') {
+      console.log("Using supabaseConfig:", supabaseConfig);
+      
+      // Use the values from supabaseConfig
+      supabase = createClient(
+        supabaseConfig.supabaseUrl, 
+        supabaseConfig.supabaseKey
+      );
+      
+      console.log("Supabase client created with config values");
+      
+      // Test connection and fetch leaderboard
       testSupabaseConnection().then(connected => {
         if (connected) {
           console.log("Supabase connection verified, fetching leaderboard...");
           fetchLeaderboard();
         } else {
           console.log("Supabase connection test failed");
+          isLoadingLeaderboard = false;
         }
       });
     } else {
-      console.log("Supabase initialization failed");
+      console.error("supabaseConfig or createClient not available");
+      isLoadingLeaderboard = false;
     }
   } catch (e) {
     console.error("Supabase initialization failed completely:", e);
     console.log("Game will run without leaderboard functionality");
+    isLoadingLeaderboard = false;
   }
+  
+  // Make the control variables global
+  window.leftPressed = leftPressed;
+  window.rightPressed = rightPressed;
+  window.firePressed = firePressed;
+  
+  // Make sure resetGame is accessible globally
+  window.resetGame = function() {
+    console.log("Reset game called from window.resetGame");
+    score = 0;
+    lives = STARTING_LIVES;
+    waveNumber = 1;
+    enemyDirection = 1;
+    player = new Player();
+    enemies = [];
+    playerBullets = [];
+    enemyBullets = [];
+    powerups = [];
+    activePowerups = [];
+    combo = 0;
+    comboTimer = 0;
+    memeTexts = [];
+    gameShakeAmount = 0;
+    isEnteringName = false;
+    nameEntryComplete = false;
+    playerName = "";
+    gameOverTimer = 0;
+    initializeWave();
+  };
+  
+  // Fetch leaderboard data when the game starts
+  fetchLeaderboard();
 }
 
 // **Draw Function**
 function draw() {
+  // Check if buttons are pressed
+  if (window.leftPressed || window.rightPressed || window.firePressed) {
+    if (gameState === "start") {
+      console.log("Button pressed, starting game");
+      updateGameState("playing");
+      resetGame();
+    }
+  }
+  
   background(30, 30, 35); // Dark background for the console
   
   // Draw the console frame
@@ -1109,7 +1239,7 @@ function draw() {
     // Title with shadow
     fill(0); // Shadow
     textSize(42);
-    text("Baby Turbo vs. The Trenches", CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 48);
+    text("Turbo vs. The Trenches", CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 48);
     
     // Subtitle with shadow
     textSize(22);
@@ -1122,7 +1252,7 @@ function draw() {
     // Title in bright color
     fill(255, 255, 0); // Yellow main text
     textSize(40);
-    text("Baby Turbo vs. The Trenches", CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 50);
+    text("Turbo vs. The Trenches", CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 50);
     
     // Subtitle in white
     fill(255); // White
@@ -1318,7 +1448,7 @@ function draw() {
     // Check for game over condition
     for (let enemy of enemies) {
       if (enemy.y + enemy.height / 2 >= player.y - player.height / 2) {
-        gameState = "game over";
+        updateGameState("game over");
         break;
       }
     }
@@ -1355,12 +1485,6 @@ function draw() {
     text("Lives: " + lives, CANVAS_WIDTH - 20, 20);
     
     // Display combo
-    if (combo > 1) {
-      textAlign(CENTER);
-      fill(255, 255, 0);
-      textSize(20 + combo);
-      text(combo + "x", CANVAS_WIDTH / 2, 30);
-    }
     
     // Display active powerups
     textAlign(LEFT);
@@ -1538,7 +1662,7 @@ function draw() {
 function keyPressed() {
   if (gameState === "start") {
     // Start game on any key
-    gameState = "playing";
+    updateGameState("playing");
     resetGame();
   } else if (gameState === "game over") {
     if (isEnteringName) {
@@ -1555,33 +1679,37 @@ function keyPressed() {
       }
     } else if (nameEntryComplete && keyCode === ENTER && gameOverTimer > MIN_GAME_OVER_DURATION) {
       // Restart game after name entry is complete AND minimum duration has passed
-      gameState = "playing";
+      updateGameState("playing");
       resetGame();
     }
   }
 }
 
-// Add a helper function to reset the game
+// Function to reset the game
 function resetGame() {
-  score = 0;
-  lives = STARTING_LIVES;
-  waveNumber = 1;
-  enemyDirection = 1;
-  player = new Player();
-  playerBullets = [];
-  enemyBullets = [];
-  powerups = [];
-  activePowerups = [];
-  combo = 0;
-  comboTimer = 0;
-  memeTexts = [];
-  gameShakeAmount = 0;
-  isEnteringName = false;
-  nameEntryComplete = false;
-  playerName = "";
-  gameOverTimer = 0; // Reset the game over timer
-  initializeWave();
+    score = 0;
+    lives = STARTING_LIVES;
+    waveNumber = 1;
+    enemyDirection = 1;
+    player = new Player();
+    enemies = [];
+    playerBullets = [];
+    enemyBullets = [];
+    powerups = [];
+    activePowerups = [];
+    combo = 0;
+    comboTimer = 0;
+    memeTexts = [];
+    gameShakeAmount = 0;
+    isEnteringName = false;
+    nameEntryComplete = false;
+    playerName = "";
+    gameOverTimer = 0;
+    initializeWave();
 }
+
+// Make resetGame globally accessible
+window.resetGame = resetGame;
 
 // Add a new PowerUp class
 class PowerUp {
@@ -1720,10 +1848,10 @@ function drawConsoleFrame() {
   // Draw the outer console frame
   push();
   
-  // Main console body
+  // Main console body - extend it lower to incorporate the buttons
   fill(FRAME_COLOR);
   noStroke();
-  rect(0, 0, FRAME_WIDTH, FRAME_HEIGHT, 20);
+  rect(0, 0, FRAME_WIDTH, FRAME_HEIGHT + 60, 20); // Added 60px to height
   
   // Game screen area (slightly inset)
   fill(FRAME_ACCENT);
@@ -1738,15 +1866,6 @@ function drawConsoleFrame() {
   textSize(24);
   textAlign(CENTER);
   text(CONSOLE_NAME, FRAME_WIDTH / 2, 35);
-  
-  // Control instructions at the bottom
-  fill(255);
-  textSize(16);
-  textAlign(CENTER);
-  text("CONTROLS", FRAME_WIDTH / 2, FRAME_HEIGHT - 100);
-  
-  // Draw control buttons
-  drawControlButtons();
   
   // Small decorative lights
   fill(0, 255, 0, 150); // Green LED
@@ -1797,6 +1916,37 @@ function drawControlButtons() {
 
 // Add mousePressed function to handle clicking on the name entry button
 function mousePressed() {
+  // Start the game from the start screen with a mouse click
+  if (gameState === "start") {
+    updateGameState("playing");
+    resetGame();
+    return;
+  }
+  
+  // Handle game over restart with mouse click
+  if (gameState === "game over" && nameEntryComplete && gameOverTimer > MIN_GAME_OVER_DURATION) {
+    // Check if click is within the restart button area
+    let buttonX = CANVAS_WIDTH / 2 - 100;
+    let buttonY = CANVAS_HEIGHT / 2 + 120; // Position of the restart button
+    let buttonWidth = 200;
+    let buttonHeight = 40;
+    
+    // Adjust for canvas position within the frame
+    let adjustedMouseX = mouseX - (FRAME_WIDTH - CANVAS_WIDTH) / 2;
+    let adjustedMouseY = mouseY - ((FRAME_HEIGHT - CANVAS_HEIGHT) / 2 - 30);
+    
+    if (adjustedMouseX >= buttonX && 
+        adjustedMouseX <= buttonX + buttonWidth &&
+        adjustedMouseY >= buttonY && 
+        adjustedMouseY <= buttonY + buttonHeight) {
+      // Restart the game
+      updateGameState("playing");
+      resetGame();
+      return;
+    }
+  }
+  
+  // Existing code for name entry button
   if (gameState === "game over" && !isEnteringName && !nameEntryComplete) {
     // Check if click is within the name entry button
     let buttonX = CANVAS_WIDTH / 2 - 100;
@@ -1804,12 +1954,56 @@ function mousePressed() {
     let buttonWidth = 200;
     let buttonHeight = 40;
     
-    if (mouseX >= buttonX + (FRAME_WIDTH - CANVAS_WIDTH) / 2 && 
-        mouseX <= buttonX + buttonWidth + (FRAME_WIDTH - CANVAS_WIDTH) / 2 &&
-        mouseY >= buttonY + (FRAME_HEIGHT - CANVAS_HEIGHT) / 2 - 30 && 
-        mouseY <= buttonY + buttonHeight + (FRAME_HEIGHT - CANVAS_HEIGHT) / 2 - 30) {
+    // Adjust for canvas position within the frame
+    let adjustedMouseX = mouseX - (FRAME_WIDTH - CANVAS_WIDTH) / 2;
+    let adjustedMouseY = mouseY - ((FRAME_HEIGHT - CANVAS_HEIGHT) / 2 - 30);
+    
+    if (adjustedMouseX >= buttonX && 
+        adjustedMouseX <= buttonX + buttonWidth &&
+        adjustedMouseY >= buttonY && 
+        adjustedMouseY <= buttonY + buttonHeight) {
       isEnteringName = true;
       playerName = "";
+    }
+  }
+}
+
+// Also, let's add a visible restart button to the game over screen
+// Find the section that draws the game over screen and add this:
+function drawGameOverScreen() {
+  // ... existing game over screen code ...
+  
+  // Add a visible restart button if name entry is complete
+  if (nameEntryComplete && gameOverTimer > MIN_GAME_OVER_DURATION) {
+    // Draw restart button
+    fill(50, 150, 50); // Green button
+    rect(CANVAS_WIDTH / 2 - 100, CANVAS_HEIGHT / 2 + 120, 200, 40, 10);
+    
+    // Button text
+    fill(255);
+    textAlign(CENTER, CENTER);
+    textSize(20);
+    text("PLAY AGAIN", CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 140);
+    
+    // Check if the button is clicked
+    if (mouseIsPressed) {
+      let buttonX = CANVAS_WIDTH / 2 - 100;
+      let buttonY = CANVAS_HEIGHT / 2 + 120;
+      let buttonWidth = 200;
+      let buttonHeight = 40;
+      
+      // Adjust for canvas position
+      let adjustedMouseX = mouseX - (FRAME_WIDTH - CANVAS_WIDTH) / 2;
+      let adjustedMouseY = mouseY - ((FRAME_HEIGHT - CANVAS_HEIGHT) / 2 - 30);
+      
+      if (adjustedMouseX >= buttonX && 
+          adjustedMouseX <= buttonX + buttonWidth &&
+          adjustedMouseY >= buttonY && 
+          adjustedMouseY <= buttonY + buttonHeight) {
+        // Restart the game
+        updateGameState("playing");
+        resetGame();
+      }
     }
   }
 }
@@ -1830,72 +2024,93 @@ function debugSupabase() {
 // Initialize Supabase client - simplified approach
 function initSupabase() {
   try {
-    // Use the globally available createClient function
-    if (typeof window.createClient === 'function') {
-      supabase = window.createClient(
-        supabaseConfig.supabaseUrl, 
-        supabaseConfig.supabaseKey
-      );
-      console.log("Supabase client initialized successfully");
-      return true;
-    } else {
-      console.error("createClient function not available");
+    // Check if supabase is available
+    if (typeof createClient !== 'function') {
+      console.error("Supabase createClient function not available");
       return false;
     }
-  } catch (error) {
-    console.error("Failed to initialize Supabase client:", error);
-    console.log("Error details:", error.message);
+    
+    // Create the Supabase client
+    supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+    console.log("Supabase client created:", supabase);
+    return true;
+  } catch (e) {
+    console.error("Error initializing Supabase:", e);
     return false;
   }
 }
 
 // Function to save score to leaderboard
 async function saveScore(name, score) {
-  if (!supabase) return;
+  if (!supabase) {
+    console.error("Cannot save score: Supabase client not initialized");
+    return;
+  }
+  
+  console.log(`Saving score: ${name} - ${score}`);
   
   try {
     const { data, error } = await supabase
       .from('leaderboard')
       .insert([
-        { player_name: name, score: score, game_date: new Date() }
+        { player_name: name, score: score, game_date: new Date().toISOString() }
       ]);
       
     if (error) {
       console.error("Error saving score:", error);
     } else {
-      console.log("Score saved successfully");
+      console.log("Score saved successfully:", data);
       // Refresh leaderboard after saving
-      fetchLeaderboard();
+      await fetchLeaderboard();
     }
   } catch (err) {
     console.error("Exception saving score:", err);
   }
 }
 
-// Function to fetch top 5 scores
+// Function to fetch top scores
 async function fetchLeaderboard() {
-  if (!supabase) return;
-  
-  isLoadingLeaderboard = true;
-  
   try {
-    const { data, error } = await supabase
+    console.log("Fetching leaderboard data directly...");
+    
+    // Check if supabase client exists
+    if (!supabase) {
+      console.error("Supabase client not initialized");
+      isLoadingLeaderboard = false;
+      return;
+    }
+    
+    // Use the correct syntax for querying the leaderboard table
+    let { data, error } = await supabase
       .from('leaderboard')
-      .select('player_name, score')
+      .select('*')
       .order('score', { ascending: false })
-      .limit(5);
-      
+      .limit(10);
+    
+    console.log("Raw leaderboard response:", { data, error });
+    
     if (error) {
       console.error("Error fetching leaderboard:", error);
-    } else {
-      leaderboard = data;
-      console.log("Leaderboard fetched:", leaderboard);
+      isLoadingLeaderboard = false;
+      return;
     }
-  } catch (err) {
-    console.error("Exception fetching leaderboard:", err);
+    
+    if (!data || data.length === 0) {
+      console.log("No leaderboard data returned");
+      isLoadingLeaderboard = false;
+      return;
+    }
+    
+    // Store the data and log success
+    leaderboard = data;
+    console.log("Leaderboard data fetched successfully:", leaderboard);
+    
+    // Set loading flag to false
+    isLoadingLeaderboard = false;
+  } catch (e) {
+    console.error("Exception fetching leaderboard:", e);
+    isLoadingLeaderboard = false;
   }
-  
-  isLoadingLeaderboard = false;
 }
 
 // Modify the name entry completion to save score
@@ -1912,44 +2127,36 @@ function completeNameEntry() {
 // Add leaderboard display to the game over screen
 function drawLeaderboard() {
   fill(30, 30, 50);
-  rect(CANVAS_WIDTH / 2 - 150, CANVAS_HEIGHT / 2 + 40, 300, 160, 10); // Moved up 90px
+  rect(CANVAS_WIDTH / 2 - 150, CANVAS_HEIGHT / 2 + 40, 300, 160, 10);
   
   fill(255, 215, 0);
   textSize(20);
   textAlign(CENTER);
-  text("TOP TURBOS", CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 65); // Moved up 90px
+  text("TOP TURBOS", CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 65);
   
-  if (!supabase) {
-    fill(255);
-    textSize(16);
-    text("Leaderboard unavailable", CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 95); // Moved up 90px
-    return;
-  }
+  // Debug info
+  console.log("Drawing leaderboard. supabase:", supabase ? "exists" : "null", 
+              "leaderboard:", leaderboard ? `has ${leaderboard.length} entries` : "empty",
+              "isLoadingLeaderboard:", isLoadingLeaderboard);
   
-  if (isLoadingLeaderboard) {
-    fill(255);
-    textSize(16);
-    text("Loading leaderboard...", CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 95); // Moved up 90px
-  } else if (leaderboard.length === 0) {
-    fill(255);
-    textSize(16);
-    text("No scores yet. Be the first!", CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 95); // Moved up 90px
-  } else {
+  // Check if we have leaderboard data
+  if (leaderboard && leaderboard.length > 0) {
     textAlign(LEFT);
     fill(255);
     textSize(16);
     
-    for (let i = 0; i < leaderboard.length; i++) {
+    for (let i = 0; i < Math.min(leaderboard.length, 5); i++) {
       const entry = leaderboard[i];
-      const yPos = CANVAS_HEIGHT / 2 + 95 + (i * 25); // Moved up 90px
+      const yPos = CANVAS_HEIGHT / 2 + 95 + (i * 25);
       
       // Rank
       text((i + 1) + ".", CANVAS_WIDTH / 2 - 130, yPos);
       
-      // Name (truncate if too long)
-      const displayName = entry.player_name.length > 12 
-        ? entry.player_name.substring(0, 12) + "..." 
-        : entry.player_name;
+      // Name (handle both field name formats)
+      const playerName = entry.player_name || entry.name || "Unknown";
+      const displayName = playerName.length > 12 
+        ? playerName.substring(0, 12) + "..." 
+        : playerName;
       text(displayName, CANVAS_WIDTH / 2 - 100, yPos);
       
       // Score (right-aligned)
@@ -1957,32 +2164,65 @@ function drawLeaderboard() {
       text(entry.score, CANVAS_WIDTH / 2 + 130, yPos);
       textAlign(LEFT);
     }
+  } else if (isLoadingLeaderboard) {
+    fill(255);
+    textSize(16);
+    text("Loading leaderboard...", CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 95);
+  } else {
+    fill(255);
+    textSize(16);
+    text("No scores yet. Be the first!", CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 95);
+  }
+  
+  // Add a refresh button
+  fill(50, 100, 200);
+  rect(CANVAS_WIDTH / 2 + 100, CANVAS_HEIGHT / 2 + 40, 40, 20, 5);
+  fill(255);
+  textSize(12);
+  textAlign(CENTER, CENTER);
+  text("Refresh", CANVAS_WIDTH / 2 + 120, CANVAS_HEIGHT / 2 + 50);
+  
+  // Check if refresh button is clicked
+  if (mouseIsPressed) {
+    let buttonX = CANVAS_WIDTH / 2 + 100;
+    let buttonY = CANVAS_HEIGHT / 2 + 40;
+    let buttonWidth = 40;
+    let buttonHeight = 20;
+    
+    // Adjust for canvas position
+    let adjustedMouseX = mouseX - (FRAME_WIDTH - CANVAS_WIDTH) / 2;
+    let adjustedMouseY = mouseY - ((FRAME_HEIGHT - CANVAS_HEIGHT) / 2 - 30);
+    
+    if (adjustedMouseX >= buttonX && 
+        adjustedMouseX <= buttonX + buttonWidth &&
+        adjustedMouseY >= buttonY && 
+        adjustedMouseY <= buttonY + buttonHeight) {
+      console.log("Refresh button clicked, fetching leaderboard...");
+      isLoadingLeaderboard = true;
+      fetchLeaderboard();
+    }
   }
 }
 
 // Test Supabase connection
 async function testSupabaseConnection() {
-  if (!supabase) {
-    console.error("Supabase client not initialized");
-    return false;
-  }
-  
   try {
+    console.log("Testing Supabase connection...");
     // Try a simple query to test the connection
     const { data, error } = await supabase
-      .from('leaderboard')
+      .from('leaderboard')  // Use 'leaderboard' instead of 'scores'
       .select('count')
       .limit(1);
-      
+    
     if (error) {
       console.error("Supabase connection test failed:", error);
       return false;
-    } else {
-      console.log("Supabase connection test successful");
-      return true;
     }
-  } catch (err) {
-    console.error("Exception during Supabase connection test:", err);
+    
+    console.log("Supabase connection successful:", data);
+    return true;
+  } catch (e) {
+    console.error("Exception during Supabase connection test:", e);
     return false;
   }
 }
@@ -2048,4 +2288,142 @@ function handleEnemyHit(enemy, bullet, bulletIndex) {
   }
   
   return false;
+}
+
+// Look for the function that displays the leaderboard
+// It might be called displayLeaderboard or something similar
+
+// Find where the leaderboard is being displayed and modify the error message
+function displayLeaderboard() {
+  // If leaderboard data is available, display it
+  if (leaderboardData && leaderboardData.length > 0) {
+    // Display leaderboard as normal
+    textAlign(CENTER);
+    fill(255, 255, 0);
+    textSize(24);
+    text("TOP TURBOS", CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 100);
+    
+    // Display leaderboard entries
+    textAlign(LEFT);
+    fill(255);
+    textSize(16);
+    let yPos = CANVAS_HEIGHT / 2 - 60;
+    for (let i = 0; i < Math.min(leaderboardData.length, 5); i++) {
+      let entry = leaderboardData[i];
+      text((i + 1) + ". " + entry.name + " - " + entry.score, CANVAS_WIDTH / 2 - 100, yPos);
+      yPos += 25;
+    }
+  } else {
+    // Display a more friendly message when leaderboard is unavailable
+    textAlign(CENTER);
+    fill(255, 255, 0);
+    textSize(24);
+    text("TOP TURBOS", CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 100);
+    
+    fill(255);
+    textSize(16);
+    text("Loading scores...", CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 60);
+    
+    // Add a small note about refreshing
+    textSize(14);
+    fill(200);
+    text("Scores will appear after your first game", CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 30);
+  }
+}
+
+// Also look for the fetchLeaderboard function and make sure it's handling errors properly
+async function fetchLeaderboard() {
+  try {
+    // Existing code to fetch leaderboard
+    const { data, error } = await supabase
+      .from('scores')
+      .select('*')
+      .order('score', { ascending: false })
+      .limit(10);
+    
+    if (error) {
+      console.error("Error fetching leaderboard:", error);
+      return;
+    }
+    
+    leaderboardData = data;
+    console.log("Leaderboard data:", leaderboardData);
+  } catch (e) {
+    console.error("Exception fetching leaderboard:", e);
+  }
+}
+
+// Find where gameState is defined and make sure it's exposed to the window object
+// Add this near the top of your sketch.js file, where gameState is defined
+
+// Make sure gameState is accessible from window
+function updateGameState(newState) {
+  gameState = newState;
+  window.gameState = newState;
+  console.log("Game state updated to:", newState);
+}
+
+// Then find all places where gameState is changed and replace them with updateGameState
+// For example:
+// gameState = "playing"; becomes updateGameState("playing");
+// gameState = "game over"; becomes updateGameState("game over");
+// gameState = "start"; becomes updateGameState("start");
+
+// Add this function for manual debugging
+window.checkLeaderboard = async function() {
+  console.log("Manually checking leaderboard...");
+  
+  if (!supabase) {
+    console.error("Supabase client not initialized");
+    return;
+  }
+  
+  try {
+    const { data, error } = await supabase
+      .from('leaderboard')
+      .select('*')
+      .order('score', { ascending: false });
+    
+    console.log("Manual leaderboard check result:", { data, error });
+    
+    if (data && data.length > 0) {
+      console.log("Leaderboard entries found:", data.length);
+      data.forEach((entry, i) => {
+        console.log(`${i+1}. ${entry.player_name || 'Unknown'}: ${entry.score}`);
+      });
+    } else {
+      console.log("No leaderboard entries found");
+    }
+  } catch (e) {
+    console.error("Error in manual leaderboard check:", e);
+  }
+};
+
+// Now let's create a direct Supabase initialization function that doesn't rely on external files
+function directInitSupabase() {
+  try {
+    console.log("Directly initializing Supabase with hardcoded credentials");
+    supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+    console.log("Supabase client created directly:", supabase);
+    return true;
+  } catch (e) {
+    console.error("Error in direct Supabase initialization:", e);
+    return false;
+  }
+}
+
+// In the setup function, replace the Supabase initialization with this:
+try {
+  console.log("Attempting direct Supabase initialization...");
+  
+  // Use direct initialization with hardcoded credentials
+  supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+  console.log("Supabase client created directly:", supabase);
+  
+  // Immediately fetch leaderboard
+  fetchLeaderboard();
+} catch (e) {
+  console.error("Supabase initialization failed completely:", e);
+  console.log("Game will run without leaderboard functionality");
+  isLoadingLeaderboard = false;
 }
