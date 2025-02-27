@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Baby Turbo vs. The Trenches</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
     
@@ -33,6 +33,65 @@
                 restartBtn.style.display = "none";
             }
         }, 500); // Check every half second
+        
+        // Add window resize handler
+        window.addEventListener('resize', function() {
+            resizeGame();
+        });
+        
+        // Function to resize the game canvas
+        function resizeGame() {
+            if (typeof window.resizeCanvas === 'function') {
+                const isMobile = window.innerWidth < 768;
+                const gameContainer = document.getElementById('game-container');
+                
+                if (isMobile) {
+                    // Mobile layout
+                    const availableWidth = window.innerWidth * 0.95;
+                    const availableHeight = window.innerHeight * 0.7; // Leave room for controls
+                    
+                    // Calculate scale factor to fit the game in the available space
+                    const scaleX = availableWidth / 800;
+                    const scaleY = availableHeight / 800;
+                    const scale = Math.min(scaleX, scaleY);
+                    
+                    // Set the canvas size
+                    window.resizeCanvas(800 * scale, 800 * scale);
+                    
+                    // Update the game controls position
+                    document.querySelector('.game-controls').style.bottom = '20px';
+                    
+                    // Adjust button sizes for mobile
+                    const buttons = document.querySelectorAll('.game-btn');
+                    buttons.forEach(btn => {
+                        btn.style.padding = '10px 20px';
+                        btn.style.fontSize = '18px';
+                    });
+                } else {
+                    // Desktop layout
+                    window.resizeCanvas(800, 800);
+                    
+                    // Reset control styles
+                    document.querySelector('.game-controls').style.bottom = '80px';
+                    
+                    const buttons = document.querySelectorAll('.game-btn');
+                    buttons.forEach(btn => {
+                        btn.style.padding = '15px 30px';
+                        btn.style.fontSize = '24px';
+                    });
+                }
+                
+                console.log("Game resized for " + (isMobile ? "mobile" : "desktop"));
+            } else {
+                console.log("resizeCanvas function not available yet");
+            }
+        }
+        
+        // Call resize on load
+        window.addEventListener('load', function() {
+            // Wait a bit for p5.js to initialize
+            setTimeout(resizeGame, 500);
+        });
     </script>
     
     <script src="supabase-config.js"></script>
@@ -49,11 +108,27 @@
             min-height: 100vh;
             background-color: #222;
             position: relative;
+            overflow: hidden; /* Prevent scrolling */
+            touch-action: none; /* Disable browser touch actions */
         }
+        
+        #game-container {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: auto;
+            margin-top: 10px;
+        }
+        
         canvas {
             display: block;
-            margin: 20px 0;
+            margin: 0 auto;
+            max-width: 100%;
+            max-height: 80vh;
         }
+        
         .game-controls {
             position: fixed;
             bottom: 80px;
@@ -66,7 +141,11 @@
             background: transparent;
             border-radius: 10px;
             z-index: 1000;
+            width: 90%;
+            max-width: 500px;
+            justify-content: space-between;
         }
+        
         .game-btn {
             padding: 15px 30px;
             font-size: 24px;
@@ -78,25 +157,34 @@
             user-select: none;
             transition: all 0.1s;
             position: relative;
+            touch-action: manipulation; /* Improve touch behavior */
+            flex: 1;
+            text-align: center;
         }
+        
         .game-btn:hover {
             background: #555;
             transform: translateY(-2px);
         }
+        
         .game-btn:active {
             background: #666;
             transform: translateY(1px);
         }
+        
         #fireButton {
             background: #662222;
             border-color: #883333;
         }
+        
         #fireButton:hover {
             background: #773333;
         }
+        
         #fireButton:active {
             background: #884444;
         }
+        
         .key-hint {
             position: absolute;
             bottom: -20px;
@@ -106,6 +194,7 @@
             font-size: 12px;
             color: #aaa;
         }
+        
         #restartButton {
             position: fixed;
             bottom: 20px;
@@ -121,31 +210,68 @@
             z-index: 2000;
             display: none; /* Hidden by default */
         }
+        
         #restartButton:hover {
             background: #45a049;
+        }
+        
+        /* Media queries for responsive design */
+        @media (max-width: 768px) {
+            .game-controls {
+                bottom: 20px;
+                gap: 10px;
+            }
+            
+            .game-btn {
+                padding: 10px 20px;
+                font-size: 18px;
+            }
+            
+            .key-hint {
+                display: none; /* Hide key hints on mobile */
+            }
+            
+            #restartButton {
+                padding: 10px 20px;
+                font-size: 18px;
+                bottom: 10px;
+            }
         }
     </style>
 </head>
 <body>
+    <div id="game-container">
+        <!-- p5.js will create the canvas here -->
+    </div>
+    
     <div class="game-controls">
         <button class="game-btn" id="leftButton" 
                 onmousedown="window.leftPressed = true" 
                 onmouseup="window.leftPressed = false" 
-                onmouseleave="window.leftPressed = false">
+                onmouseleave="window.leftPressed = false"
+                ontouchstart="window.leftPressed = true; event.preventDefault();" 
+                ontouchend="window.leftPressed = false; event.preventDefault();"
+                ontouchcancel="window.leftPressed = false; event.preventDefault();">
             ← LEFT
             <span class="key-hint">← key</span>
         </button>
         <button class="game-btn" id="rightButton"
                 onmousedown="window.rightPressed = true" 
                 onmouseup="window.rightPressed = false" 
-                onmouseleave="window.rightPressed = false">
+                onmouseleave="window.rightPressed = false"
+                ontouchstart="window.rightPressed = true; event.preventDefault();" 
+                ontouchend="window.rightPressed = false; event.preventDefault();"
+                ontouchcancel="window.rightPressed = false; event.preventDefault();">
             RIGHT →
             <span class="key-hint">→ key</span>
         </button>
         <button class="game-btn" id="fireButton"
                 onmousedown="window.firePressed = true" 
                 onmouseup="window.firePressed = false" 
-                onmouseleave="window.firePressed = false">
+                onmouseleave="window.firePressed = false"
+                ontouchstart="window.firePressed = true; event.preventDefault();" 
+                ontouchend="window.firePressed = false; event.preventDefault();"
+                ontouchcancel="window.firePressed = false; event.preventDefault();">
             FIRE!
             <span class="key-hint">SPACE</span>
         </button>
@@ -153,5 +279,21 @@
     
     <!-- Simple restart button at the bottom center -->
     <button id="restartButton" onclick="restartGame()">RESTART</button>
+    
+    <script>
+        // Add this to prevent scrolling when touching game buttons
+        document.addEventListener('touchmove', function(e) {
+            if(e.target.classList.contains('game-btn')) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+        
+        // Prevent pinch zoom
+        document.addEventListener('touchstart', function(e) {
+            if (e.touches.length > 1) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+    </script>
 </body>
 </html>

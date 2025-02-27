@@ -2427,3 +2427,12 @@ try {
   console.log("Game will run without leaderboard functionality");
   isLoadingLeaderboard = false;
 }
+
+// Add this function to your sketch.js file
+window.resizeCanvas = function(w, h) {
+  resizeCanvas(w, h);
+  console.log("Canvas resized to", w, "x", h);
+  
+  // You might need to adjust game elements based on the new canvas size
+  // For example, recalculate player position, etc.
+};
