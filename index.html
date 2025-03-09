@@ -34,11 +34,6 @@
             }
         }, 500); // Check every half second
         
-        // Add window resize handler
-        window.addEventListener('resize', function() {
-            resizeGame();
-        });
-        
         // Function to resize the game canvas
         function resizeGame() {
             if (typeof window.resizeCanvas === 'function') {
@@ -46,51 +41,43 @@
                 const gameContainer = document.getElementById('game-container');
                 
                 if (isMobile) {
-                    // Mobile layout
-                    const availableWidth = window.innerWidth * 0.95;
-                    const availableHeight = window.innerHeight * 0.7; // Leave room for controls
+                    const containerWidth = window.innerWidth;
+                    const containerHeight = window.innerHeight * 0.7;
                     
-                    // Calculate scale factor to fit the game in the available space
-                    const scaleX = availableWidth / 800;
-                    const scaleY = availableHeight / 800;
-                    const scale = Math.min(scaleX, scaleY);
+                    // Calculate the aspect ratio
+                    const aspectRatio = Math.min(containerWidth / 800, containerHeight / 800);
                     
-                    // Set the canvas size
-                    window.resizeCanvas(800 * scale, 800 * scale);
+                    // Set fixed dimensions
+                    const newWidth = Math.floor(800 * aspectRatio);
+                    const newHeight = Math.floor(800 * aspectRatio);
                     
-                    // Update the game controls position
-                    document.querySelector('.game-controls').style.bottom = '20px';
+                    window.resizeCanvas(newWidth, newHeight, true);
                     
-                    // Adjust button sizes for mobile
-                    const buttons = document.querySelectorAll('.game-btn');
-                    buttons.forEach(btn => {
-                        btn.style.padding = '10px 20px';
-                        btn.style.fontSize = '18px';
-                    });
+                    // Ensure the canvas stays centered
+                    const canvas = document.querySelector('canvas');
+                    if (canvas) {
+                        canvas.style.width = `${newWidth}px`;
+                        canvas.style.height = `${newHeight}px`;
+                    }
                 } else {
-                    // Desktop layout
-                    window.resizeCanvas(800, 800);
-                    
-                    // Reset control styles
-                    document.querySelector('.game-controls').style.bottom = '80px';
-                    
-                    const buttons = document.querySelectorAll('.game-btn');
-                    buttons.forEach(btn => {
-                        btn.style.padding = '15px 30px';
-                        btn.style.fontSize = '24px';
-                    });
+                    window.resizeCanvas(800, 800, true);
                 }
-                
-                console.log("Game resized for " + (isMobile ? "mobile" : "desktop"));
-            } else {
-                console.log("resizeCanvas function not available yet");
             }
         }
         
-        // Call resize on load
+        // Call resize on load and after a short delay
         window.addEventListener('load', function() {
-            // Wait a bit for p5.js to initialize
+            resizeGame();
+            // Call again after a delay to ensure everything is loaded
+            setTimeout(resizeGame, 100);
             setTimeout(resizeGame, 500);
+        });
+        
+        // Debounce the resize event
+        let resizeTimeout;
+        window.addEventListener('resize', function() {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(resizeGame, 100);
         });
     </script>
     
@@ -107,37 +94,54 @@
             align-items: center;
             min-height: 100vh;
             background-color: #222;
-            position: relative;
-            overflow: hidden; /* Prevent scrolling */
-            touch-action: none; /* Disable browser touch actions */
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            touch-action: none;
         }
         
         #game-container {
             position: relative;
             display: flex;
             justify-content: center;
-            align-items: center;
+            align-items: flex-start;
             width: 100%;
-            height: auto;
+            height: calc(100vh - 150px);
             margin-top: 10px;
+        }
+        
+        .frame-wrapper {
+            position: fixed;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 900px;
+            height: 100vh;
+            background-color: #333;
+            border-radius: 10px;
+            z-index: 0;
         }
         
         canvas {
             display: block;
             margin: 0 auto;
-            max-width: 100%;
-            max-height: 80vh;
+            width: auto !important;
+            height: auto !important;
+            max-width: 100% !important;
+            max-height: calc(100vh - 200px) !important;
+            object-fit: contain;
         }
         
         .game-controls {
             position: fixed;
-            bottom: 80px;
+            bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
             gap: 20px;
             padding: 10px;
-            margin-bottom: 10px;
             background: transparent;
             border-radius: 10px;
             z-index: 1000;
@@ -217,8 +221,12 @@
         
         /* Media queries for responsive design */
         @media (max-width: 768px) {
+            .frame-wrapper {
+                display: none;
+            }
+            
             .game-controls {
-                bottom: 20px;
+                bottom: 10px;
                 gap: 10px;
             }
             
@@ -228,18 +236,43 @@
             }
             
             .key-hint {
-                display: none; /* Hide key hints on mobile */
+                display: none;
             }
             
-            #restartButton {
-                padding: 10px 20px;
-                font-size: 18px;
-                bottom: 10px;
+            #game-container {
+                height: 70vh;
+            }
+            
+            canvas {
+                max-height: 70vh !important;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .game-controls {
+                bottom: 40px;
+                z-index: 2000;
+            }
+            
+            #game-container {
+                height: calc(100vh - 180px);
+                margin-bottom: 0;
+                margin-top: 20px;
+                position: relative;
+                z-index: 1000;
+            }
+            
+            canvas {
+                max-height: calc(100vh - 200px) !important;
+                margin-bottom: 120px;
+                position: relative;
+                z-index: 1000;
             }
         }
     </style>
 </head>
 <body>
+    <div class="frame-wrapper"></div>
     <div id="game-container">
         <!-- p5.js will create the canvas here -->
     </div>

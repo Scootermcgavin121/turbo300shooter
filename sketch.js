@@ -1114,86 +1114,111 @@ function initializeWave() {
 
 // **Setup Function**
 function setup() {
-  createCanvas(FRAME_WIDTH, FRAME_HEIGHT);
-  frameRate(60);
-  smooth(); // Enable anti-aliasing for smoother rendering
-  player = new Player();
-  // Generate static star field
-  for (let i = 0; i < 100; i++) {
-    stars.push(new Star(random(CANVAS_WIDTH), random(CANVAS_HEIGHT), random(1, 3)));
-  }
-  
-  // Debug available Supabase objects
-  console.log("Available Supabase objects:");
-  console.log("window.supabase:", typeof window.supabase);
-  
-  // Initialize Supabase with better error handling
-  try {
-    console.log("Attempting to initialize Supabase...");
-    
-    // Check if supabaseConfig is available from the imported file
-    if (typeof supabaseConfig !== 'undefined' && typeof createClient === 'function') {
-      console.log("Using supabaseConfig:", supabaseConfig);
-      
-      // Use the values from supabaseConfig
-      supabase = createClient(
-        supabaseConfig.supabaseUrl, 
-        supabaseConfig.supabaseKey
-      );
-      
-      console.log("Supabase client created with config values");
-      
-      // Test connection and fetch leaderboard
-      testSupabaseConnection().then(connected => {
-        if (connected) {
-          console.log("Supabase connection verified, fetching leaderboard...");
-          fetchLeaderboard();
-        } else {
-          console.log("Supabase connection test failed");
-          isLoadingLeaderboard = false;
-        }
-      });
+    // Create canvas with initial size
+    const isMobile = window.innerWidth < 768;
+    if (isMobile) {
+        const containerWidth = window.innerWidth;
+        const containerHeight = window.innerHeight * 0.7;
+        const aspectRatio = Math.min(containerWidth / 800, containerHeight / 800);
+        const newWidth = Math.floor(800 * aspectRatio);
+        const newHeight = Math.floor(800 * aspectRatio);
+        createCanvas(newWidth, newHeight);
     } else {
-      console.error("supabaseConfig or createClient not available");
-      isLoadingLeaderboard = false;
+        createCanvas(800, 800);
     }
-  } catch (e) {
-    console.error("Supabase initialization failed completely:", e);
-    console.log("Game will run without leaderboard functionality");
-    isLoadingLeaderboard = false;
-  }
-  
-  // Make the control variables global
-  window.leftPressed = leftPressed;
-  window.rightPressed = rightPressed;
-  window.firePressed = firePressed;
-  
-  // Make sure resetGame is accessible globally
-  window.resetGame = function() {
-    console.log("Reset game called from window.resetGame");
-    score = 0;
-    lives = STARTING_LIVES;
-    waveNumber = 1;
-    enemyDirection = 1;
+    frameRate(60);
+    smooth(); // Enable anti-aliasing for smoother rendering
     player = new Player();
-    enemies = [];
-    playerBullets = [];
-    enemyBullets = [];
-    powerups = [];
-    activePowerups = [];
-    combo = 0;
-    comboTimer = 0;
-    memeTexts = [];
-    gameShakeAmount = 0;
-    isEnteringName = false;
-    nameEntryComplete = false;
-    playerName = "";
-    gameOverTimer = 0;
-    initializeWave();
-  };
-  
-  // Fetch leaderboard data when the game starts
-  fetchLeaderboard();
+    // Generate static star field
+    for (let i = 0; i < 100; i++) {
+        stars.push(new Star(random(CANVAS_WIDTH), random(CANVAS_HEIGHT), random(1, 3)));
+    }
+    
+    // Debug available Supabase objects
+    console.log("Available Supabase objects:");
+    console.log("window.supabase:", typeof window.supabase);
+    
+    // Initialize Supabase with better error handling
+    try {
+        console.log("Attempting to initialize Supabase...");
+        
+        // Check if supabaseConfig is available from the imported file
+        if (typeof supabaseConfig !== 'undefined' && typeof createClient === 'function') {
+            console.log("Using supabaseConfig:", supabaseConfig);
+            
+            // Use the values from supabaseConfig
+            supabase = createClient(
+                supabaseConfig.supabaseUrl, 
+                supabaseConfig.supabaseKey
+            );
+            
+            console.log("Supabase client created with config values");
+            
+            // Test connection and fetch leaderboard
+            testSupabaseConnection().then(connected => {
+                if (connected) {
+                    console.log("Supabase connection verified, fetching leaderboard...");
+                    fetchLeaderboard();
+                } else {
+                    console.log("Supabase connection test failed");
+                    isLoadingLeaderboard = false;
+                }
+            });
+        } else {
+            console.error("supabaseConfig or createClient not available");
+            isLoadingLeaderboard = false;
+        }
+    } catch (e) {
+        console.error("Supabase initialization failed completely:", e);
+        console.log("Game will run without leaderboard functionality");
+        isLoadingLeaderboard = false;
+    }
+    
+    // Make the control variables global
+    window.leftPressed = leftPressed;
+    window.rightPressed = rightPressed;
+    window.firePressed = firePressed;
+    
+    // Make sure resetGame is accessible globally
+    window.resetGame = function() {
+        console.log("Reset game called from window.resetGame");
+        score = 0;
+        lives = STARTING_LIVES;
+        waveNumber = 1;
+        enemyDirection = 1;
+        player = new Player();
+        enemies = [];
+        playerBullets = [];
+        enemyBullets = [];
+        powerups = [];
+        activePowerups = [];
+        combo = 0;
+        comboTimer = 0;
+        memeTexts = [];
+        gameShakeAmount = 0;
+        isEnteringName = false;
+        nameEntryComplete = false;
+        playerName = "";
+        gameOverTimer = 0;
+        initializeWave();
+    };
+    
+    // Fetch leaderboard data when the game starts
+    fetchLeaderboard();
+}
+
+function windowResized() {
+    const isMobile = window.innerWidth < 768;
+    if (isMobile) {
+        const containerWidth = window.innerWidth;
+        const containerHeight = window.innerHeight * 0.7;
+        const aspectRatio = Math.min(containerWidth / 800, containerHeight / 800);
+        const newWidth = Math.floor(800 * aspectRatio);
+        const newHeight = Math.floor(800 * aspectRatio);
+        resizeCanvas(newWidth, newHeight);
+    } else {
+        resizeCanvas(800, 800);
+    }
 }
 
 // **Draw Function**
