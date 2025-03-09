@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=0.5, maximum-scale=0.5, user-scalable=no, viewport-fit=cover">
     <title>Baby Turbo vs. The Trenches</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
     
@@ -42,16 +42,6 @@
                 if (isMobile) {
                     // Use a fixed size for the canvas in p5.js
                     window.resizeCanvas(400, 400, true);
-                    
-                    // Let CSS handle the scaling
-                    const canvas = document.querySelector('canvas');
-                    if (canvas) {
-                        // Remove any inline styles that might interfere
-                        canvas.style.width = '';
-                        canvas.style.height = '';
-                        canvas.style.maxWidth = '';
-                        canvas.style.maxHeight = '';
-                    }
                 } else {
                     window.resizeCanvas(800, 800, true);
                 }
@@ -214,36 +204,20 @@
         
         /* Media queries for responsive design */
         @media (max-width: 768px) {
-            body {
-                position: static;
-                overflow: auto;
-                padding: 10px 0 80px 0;
-                height: auto;
-                min-height: 100vh;
-            }
-            
             .frame-wrapper {
                 display: none;
             }
             
             .game-controls {
-                position: fixed;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                transform: none;
-                width: 100%;
-                max-width: none;
-                gap: 5px;
+                bottom: 10px;
+                gap: 10px;
+                z-index: 2000;
                 padding: 5px;
-                background: rgba(0,0,0,0.7);
-                z-index: 3000;
             }
             
             .game-btn {
-                padding: 8px;
-                font-size: 14px;
-                margin: 0 2px;
+                padding: 15px;
+                font-size: 18px;
             }
             
             .key-hint {
@@ -251,22 +225,16 @@
             }
             
             #game-container {
-                width: 100%;
                 height: auto;
                 margin: 0;
                 padding: 0;
-                position: static;
-                display: block;
+                display: flex;
+                justify-content: center;
+                align-items: center;
             }
             
             canvas {
-                display: block !important;
                 margin: 0 auto !important;
-                width: 100% !important;
-                max-width: 400px !important;
-                height: auto !important;
-                transform: scale(0.9);
-                transform-origin: top center;
             }
         }
 
