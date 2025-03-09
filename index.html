@@ -38,26 +38,17 @@
         function resizeGame() {
             if (typeof window.resizeCanvas === 'function') {
                 const isMobile = window.innerWidth < 768;
-                const gameContainer = document.getElementById('game-container');
                 
                 if (isMobile) {
-                    const containerWidth = window.innerWidth;
-                    const containerHeight = window.innerHeight;
+                    // On mobile, make the canvas 90% of screen width
+                    const newSize = Math.floor(window.innerWidth * 0.9);
+                    window.resizeCanvas(newSize, newSize, true);
                     
-                    // Calculate the aspect ratio to fit the entire game
-                    const aspectRatio = Math.min(containerWidth / 800, (containerHeight - 150) / 800) * 0.5; // Reduced scaling to 0.5
-                    
-                    // Set fixed dimensions
-                    const newWidth = Math.floor(800 * aspectRatio);
-                    const newHeight = Math.floor(800 * aspectRatio);
-                    
-                    window.resizeCanvas(newWidth, newHeight, true);
-                    
-                    // Ensure the canvas stays centered
+                    // Force the canvas size
                     const canvas = document.querySelector('canvas');
                     if (canvas) {
-                        canvas.style.width = `${newWidth}px`;
-                        canvas.style.height = `${newHeight}px`;
+                        canvas.style.width = `${newSize}px`;
+                        canvas.style.height = `${newSize}px`;
                     }
                 } else {
                     window.resizeCanvas(800, 800, true);
@@ -223,7 +214,7 @@
         @media (max-width: 768px) {
             body {
                 justify-content: flex-start;
-                padding-top: 20px;
+                padding-top: 10px;
             }
             
             .frame-wrapper {
@@ -231,15 +222,22 @@
             }
             
             .game-controls {
+                position: fixed;
                 bottom: 10px;
-                gap: 10px;
-                z-index: 2000;
-                padding: 5px;
+                left: 0;
+                right: 0;
+                transform: none;
+                width: 100%;
+                max-width: none;
+                gap: 5px;
+                padding: 10px;
+                background: rgba(0,0,0,0.5);
             }
             
             .game-btn {
-                padding: 8px 16px;
-                font-size: 16px;
+                padding: 8px;
+                font-size: 14px;
+                margin: 0 2px;
             }
             
             .key-hint {
@@ -247,23 +245,21 @@
             }
             
             #game-container {
+                width: 100%;
                 height: auto;
                 margin: 0;
                 padding: 0;
-                display: flex;
-                justify-content: center;
-                align-items: flex-start;
                 position: relative;
-                margin-bottom: 100px;
+                margin-bottom: 70px;
             }
             
             canvas {
-                width: auto !important;
-                height: auto !important;
+                width: 90vw !important;
+                height: 90vw !important;
                 max-width: 90vw !important;
-                max-height: calc(100vh - 180px) !important;
-                margin: 0 auto;
-                transform-origin: top center;
+                max-height: 90vw !important;
+                margin: 0 auto !important;
+                display: block !important;
             }
         }
 
