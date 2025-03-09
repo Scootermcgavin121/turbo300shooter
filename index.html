@@ -45,7 +45,7 @@
                     const containerHeight = window.innerHeight;
                     
                     // Calculate the aspect ratio to fit the entire game
-                    const aspectRatio = Math.min(containerWidth / 800, (containerHeight - 150) / 800) * 0.9;
+                    const aspectRatio = Math.min(containerWidth / 800, (containerHeight - 150) / 800) * 0.5; // Reduced scaling to 0.5
                     
                     // Set fixed dimensions
                     const newWidth = Math.floor(800 * aspectRatio);
@@ -222,7 +222,8 @@
         /* Media queries for responsive design */
         @media (max-width: 768px) {
             body {
-                justify-content: center;
+                justify-content: flex-start;
+                padding-top: 20px;
             }
             
             .frame-wrapper {
@@ -251,17 +252,18 @@
                 padding: 0;
                 display: flex;
                 justify-content: center;
-                align-items: center;
+                align-items: flex-start;
                 position: relative;
-                margin-bottom: 80px;
+                margin-bottom: 100px;
             }
             
             canvas {
                 width: auto !important;
                 height: auto !important;
-                max-width: 95vw !important;
-                max-height: calc(100vh - 150px) !important;
+                max-width: 90vw !important;
+                max-height: calc(100vh - 180px) !important;
                 margin: 0 auto;
+                transform-origin: top center;
             }
         }
 
