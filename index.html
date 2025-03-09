@@ -42,10 +42,10 @@
                 
                 if (isMobile) {
                     const containerWidth = window.innerWidth;
-                    const containerHeight = window.innerHeight - 120; // Account for controls
+                    const containerHeight = window.innerHeight;
                     
                     // Calculate the aspect ratio to fit the entire game
-                    const aspectRatio = Math.min(containerWidth / 800, containerHeight / 800) * 0.65; // Reduced scaling
+                    const aspectRatio = Math.min(containerWidth / 800, (containerHeight - 150) / 800) * 0.9;
                     
                     // Set fixed dimensions
                     const newWidth = Math.floor(800 * aspectRatio);
@@ -221,6 +221,10 @@
         
         /* Media queries for responsive design */
         @media (max-width: 768px) {
+            body {
+                justify-content: center;
+            }
+            
             .frame-wrapper {
                 display: none;
             }
@@ -244,26 +248,20 @@
             #game-container {
                 height: auto;
                 margin: 0;
-                padding: 10px;
+                padding: 0;
                 display: flex;
                 justify-content: center;
                 align-items: center;
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 100px;
+                position: relative;
+                margin-bottom: 80px;
             }
             
             canvas {
                 width: auto !important;
                 height: auto !important;
-                max-width: 100% !important;
-                max-height: calc(100vh - 120px) !important;
+                max-width: 95vw !important;
+                max-height: calc(100vh - 150px) !important;
                 margin: 0 auto;
-                transform-origin: center center;
-                position: relative;
-                top: 0;
             }
         }
 
