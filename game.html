@@ -40,10 +40,60 @@
                 max-height: 800px !important;
             }
         }
+        
+        #debug-button {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 5px 10px;
+            background: #333;
+            color: white;
+            border: 1px solid #555;
+            border-radius: 4px;
+            z-index: 3000;
+        }
+        
+        #debug-info {
+            position: fixed;
+            top: 50px;
+            right: 10px;
+            padding: 10px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            border: 1px solid #555;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            z-index: 3000;
+            display: none;
+            max-width: 300px;
+        }
     </style>
 </head>
 <body>
+    <button id="debug-button">Debug</button>
+    <div id="debug-info"></div>
+    
     <script>
+        // Debug function to show canvas info
+        function showDebugInfo() {
+            const canvas = document.querySelector('canvas');
+            const debugInfo = document.getElementById('debug-info');
+            
+            if (canvas && debugInfo) {
+                const rect = canvas.getBoundingClientRect();
+                debugInfo.innerHTML = `
+                    <p>Canvas size: ${canvas.width} x ${canvas.height}</p>
+                    <p>Canvas display size: ${rect.width} x ${rect.height}</p>
+                    <p>Canvas position: ${rect.left}, ${rect.top}</p>
+                    <p>Window size: ${window.innerWidth} x ${window.innerHeight}</p>
+                    <p>Device pixel ratio: ${window.devicePixelRatio}</p>
+                    <p>Is mobile: ${window.innerWidth < 768}</p>
+                `;
+                debugInfo.style.display = 'block';
+            }
+        }
+        
         // Control variables that will be updated from parent frame
         window.leftPressed = false;
         window.rightPressed = false;
@@ -114,6 +164,9 @@
                         canvas.style.maxHeight = '800px';
                     }
                 }
+                
+                // Update debug info
+                setTimeout(showDebugInfo, 100);
             }
         }
         
@@ -123,6 +176,13 @@
             setTimeout(resizeGame, 100);
             setTimeout(resizeGame, 500);
             setTimeout(resizeGame, 1000);
+            
+            // Add debug button functionality
+            document.getElementById('debug-button').addEventListener('click', function() {
+                const debugInfo = document.getElementById('debug-info');
+                debugInfo.style.display = debugInfo.style.display === 'none' ? 'block' : 'none';
+                showDebugInfo();
+            });
         });
         
         // Debounce the resize event
