@@ -40,18 +40,17 @@
                 const isMobile = window.innerWidth < 768;
                 
                 if (isMobile) {
-                    // On mobile, make the canvas much smaller
-                    const newSize = Math.min(window.innerWidth * 0.7, window.innerHeight * 0.5);
-                    window.resizeCanvas(newSize, newSize, true);
+                    // Use a fixed size for the canvas in p5.js
+                    window.resizeCanvas(400, 400, true);
                     
-                    // Force the canvas size
+                    // Let CSS handle the scaling
                     const canvas = document.querySelector('canvas');
                     if (canvas) {
-                        canvas.style.width = `${newSize}px`;
-                        canvas.style.height = `${newSize}px`;
-                        
-                        // Log canvas dimensions for debugging
-                        console.log("Canvas size set to:", newSize, "x", newSize);
+                        // Remove any inline styles that might interfere
+                        canvas.style.width = '';
+                        canvas.style.height = '';
+                        canvas.style.maxWidth = '';
+                        canvas.style.maxHeight = '';
                     }
                 } else {
                     window.resizeCanvas(800, 800, true);
@@ -216,13 +215,11 @@
         /* Media queries for responsive design */
         @media (max-width: 768px) {
             body {
-                position: relative;
-                overflow-y: auto;
-                overflow-x: hidden;
-                justify-content: flex-start;
-                padding-top: 20px;
+                position: static;
+                overflow: auto;
+                padding: 10px 0 80px 0;
                 height: auto;
-                min-height: 100%;
+                min-height: 100vh;
             }
             
             .frame-wrapper {
@@ -231,7 +228,7 @@
             
             .game-controls {
                 position: fixed;
-                bottom: 10px;
+                bottom: 0;
                 left: 0;
                 right: 0;
                 transform: none;
@@ -256,21 +253,20 @@
             #game-container {
                 width: 100%;
                 height: auto;
-                margin: 0 0 100px 0;
+                margin: 0;
                 padding: 0;
-                position: relative;
-                display: flex;
-                justify-content: center;
-                align-items: center;
+                position: static;
+                display: block;
             }
             
             canvas {
-                width: 70vw !important;
-                height: 70vw !important;
-                max-width: 70vw !important;
-                max-height: 70vw !important;
-                margin: 0 auto 80px auto !important;
                 display: block !important;
+                margin: 0 auto !important;
+                width: 100% !important;
+                max-width: 400px !important;
+                height: auto !important;
+                transform: scale(0.9);
+                transform-origin: top center;
             }
         }
 
