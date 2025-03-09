@@ -40,8 +40,8 @@
                 const isMobile = window.innerWidth < 768;
                 
                 if (isMobile) {
-                    // On mobile, make the canvas 90% of screen width
-                    const newSize = Math.floor(window.innerWidth * 0.9);
+                    // On mobile, make the canvas much smaller
+                    const newSize = Math.min(window.innerWidth * 0.7, window.innerHeight * 0.5);
                     window.resizeCanvas(newSize, newSize, true);
                     
                     // Force the canvas size
@@ -49,6 +49,9 @@
                     if (canvas) {
                         canvas.style.width = `${newSize}px`;
                         canvas.style.height = `${newSize}px`;
+                        
+                        // Log canvas dimensions for debugging
+                        console.log("Canvas size set to:", newSize, "x", newSize);
                     }
                 } else {
                     window.resizeCanvas(800, 800, true);
@@ -213,8 +216,13 @@
         /* Media queries for responsive design */
         @media (max-width: 768px) {
             body {
+                position: relative;
+                overflow-y: auto;
+                overflow-x: hidden;
                 justify-content: flex-start;
-                padding-top: 10px;
+                padding-top: 20px;
+                height: auto;
+                min-height: 100%;
             }
             
             .frame-wrapper {
@@ -230,8 +238,9 @@
                 width: 100%;
                 max-width: none;
                 gap: 5px;
-                padding: 10px;
-                background: rgba(0,0,0,0.5);
+                padding: 5px;
+                background: rgba(0,0,0,0.7);
+                z-index: 3000;
             }
             
             .game-btn {
@@ -247,18 +256,20 @@
             #game-container {
                 width: 100%;
                 height: auto;
-                margin: 0;
+                margin: 0 0 100px 0;
                 padding: 0;
                 position: relative;
-                margin-bottom: 70px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
             }
             
             canvas {
-                width: 90vw !important;
-                height: 90vw !important;
-                max-width: 90vw !important;
-                max-height: 90vw !important;
-                margin: 0 auto !important;
+                width: 70vw !important;
+                height: 70vw !important;
+                max-width: 70vw !important;
+                max-height: 70vw !important;
+                margin: 0 auto 80px auto !important;
                 display: block !important;
             }
         }
