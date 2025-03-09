@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Game Canvas</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/dist/umd/supabase.min.js"></script>
+    <script src="supabase-config.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #222;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        
+        canvas {
+            display: block !important;
+            margin: 0 auto !important;
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: contain !important;
+        }
+        
+        @media (max-width: 768px) {
+            canvas {
+                max-width: 400px !important;
+                max-height: 400px !important;
+            }
+        }
+        
+        @media (min-width: 769px) {
+            canvas {
+                max-width: 800px !important;
+                max-height: 800px !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <script>
+        // Control variables that will be updated from parent frame
+        window.leftPressed = false;
+        window.rightPressed = false;
+        window.firePressed = false;
+        window.gameState = "";
+        
+        // Listen for messages from parent frame
+        window.addEventListener('message', function(event) {
+            if (event.data) {
+                if (event.data.leftPressed !== undefined) {
+                    window.leftPressed = event.data.leftPressed;
+                }
+                if (event.data.rightPressed !== undefined) {
+                    window.rightPressed = event.data.rightPressed;
+                }
+                if (event.data.firePressed !== undefined) {
+                    window.firePressed = event.data.firePressed;
+                }
+                if (event.data.restart) {
+                    location.reload();
+                }
+            }
+        });
+        
+        // Send game state to parent
+        function updateGameState() {
+            if (window.parent) {
+                window.parent.postMessage({ gameState: window.gameState }, '*');
+            }
+        }
+        
+        // Check game state periodically
+        setInterval(updateGameState, 500);
+        
+        // Override createCanvas to force a specific size based on device
+        window.originalCreateCanvas = window.createCanvas;
+        window.createCanvas = function() {
+            const isMobile = window.innerWidth < 768;
+            if (isMobile) {
+                return window.originalCreateCanvas(400, 400);
+            } else {
+                return window.originalCreateCanvas(800, 800);
+            }
+        };
+        
+        // Function to resize the game canvas
+        function resizeGame() {
+            if (typeof window.resizeCanvas === 'function') {
+                const isMobile = window.innerWidth < 768;
+                
+                if (isMobile) {
+                    window.resizeCanvas(400, 400, true);
+                } else {
+                    window.resizeCanvas(800, 800, true);
+                }
+                
+                // Force the canvas size with CSS
+                const canvas = document.querySelector('canvas');
+                if (canvas) {
+                    canvas.style.width = '100%';
+                    canvas.style.height = '100%';
+                    
+                    if (isMobile) {
+                        canvas.style.maxWidth = '400px';
+                        canvas.style.maxHeight = '400px';
+                    } else {
+                        canvas.style.maxWidth = '800px';
+                        canvas.style.maxHeight = '800px';
+                    }
+                }
+            }
+        }
+        
+        // Call resize on load and after a short delay
+        window.addEventListener('load', function() {
+            resizeGame();
+            setTimeout(resizeGame, 100);
+            setTimeout(resizeGame, 500);
+            setTimeout(resizeGame, 1000);
+        });
+        
+        // Debounce the resize event
+        let resizeTimeout;
+        window.addEventListener('resize', function() {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(resizeGame, 100);
+        });
+    </script>
+    <script src="sketch.js"></script>
+</body>
+</html> 

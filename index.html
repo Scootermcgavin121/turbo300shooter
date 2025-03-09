@@ -4,102 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Baby Turbo vs. The Trenches</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
-    
-    <!-- Load Supabase directly from CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/dist/umd/supabase.min.js"></script>
-    
-    <script>
-        // Initialize control variables
-        window.leftPressed = false;
-        window.rightPressed = false;
-        window.firePressed = false;
-        
-        // Function to restart the game by reloading the page
-        function restartGame() {
-            console.log("Reloading page to restart game");
-            location.reload();
-        }
-        
-        // Check game state periodically to show/hide restart button
-        setInterval(function() {
-            const restartBtn = document.getElementById('restartButton');
-            console.log("Current game state:", window.gameState);
-            
-            if (window.gameState === "game over") {
-                console.log("Game over detected, showing restart button");
-                restartBtn.style.display = "block";
-            } else {
-                restartBtn.style.display = "none";
-            }
-        }, 500); // Check every half second
-        
-        // Debug function to show canvas info
-        function showDebugInfo() {
-            const canvas = document.querySelector('canvas');
-            const debugInfo = document.getElementById('debug-info');
-            
-            if (canvas && debugInfo) {
-                const rect = canvas.getBoundingClientRect();
-                debugInfo.innerHTML = `
-                    <p>Canvas size: ${canvas.width} x ${canvas.height}</p>
-                    <p>Canvas display size: ${rect.width} x ${rect.height}</p>
-                    <p>Canvas position: ${rect.left}, ${rect.top}</p>
-                    <p>Window size: ${window.innerWidth} x ${window.innerHeight}</p>
-                `;
-                debugInfo.style.display = 'block';
-            }
-        }
-        
-        // Function to resize the game canvas
-        function resizeGame() {
-            if (typeof window.resizeCanvas === 'function') {
-                const isMobile = window.innerWidth < 768;
-                
-                if (isMobile) {
-                    // Use a fixed size for the canvas in p5.js
-                    window.resizeCanvas(300, 300, true);
-                    
-                    // Force the canvas to be small
-                    const canvas = document.querySelector('canvas');
-                    if (canvas) {
-                        canvas.style.width = '300px';
-                        canvas.style.height = '300px';
-                    }
-                } else {
-                    window.resizeCanvas(800, 800, true);
-                }
-                
-                // Show debug info
-                setTimeout(showDebugInfo, 100);
-            }
-        }
-        
-        // Call resize on load and after a short delay
-        window.addEventListener('load', function() {
-            resizeGame();
-            // Call again after a delay to ensure everything is loaded
-            setTimeout(resizeGame, 100);
-            setTimeout(resizeGame, 500);
-            
-            // Add debug button functionality
-            document.getElementById('debug-button').addEventListener('click', function() {
-                const debugInfo = document.getElementById('debug-info');
-                debugInfo.style.display = debugInfo.style.display === 'none' ? 'block' : 'none';
-                showDebugInfo();
-            });
-        });
-        
-        // Debounce the resize event
-        let resizeTimeout;
-        window.addEventListener('resize', function() {
-            clearTimeout(resizeTimeout);
-            resizeTimeout = setTimeout(resizeGame, 100);
-        });
-    </script>
-    
-    <script src="supabase-config.js"></script>
-    <script src="sketch.js"></script>
     
     <style>
         body {
@@ -118,29 +22,18 @@
             touch-action: manipulation;
         }
         
-        #game-container {
-            position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+        #game-frame {
             width: 100%;
-            height: auto;
-            margin: 20px 0;
-        }
-        
-        .frame-wrapper {
-            display: none;
-        }
-        
-        canvas {
-            display: block;
-            margin: 0 auto;
+            max-width: 400px;
+            height: 400px;
             border: 2px solid #444;
+            margin: 20px auto;
+            display: block;
         }
         
         .game-controls {
             position: fixed;
-            bottom: 20px;
+            bottom: 0;
             left: 0;
             right: 0;
             display: flex;
@@ -202,81 +95,153 @@
             display: none;
         }
         
-        #debug-button {
-            position: fixed;
-            top: 10px;
-            right: 10px;
-            padding: 5px 10px;
-            background: #333;
-            color: white;
-            border: 1px solid #555;
-            border-radius: 4px;
-            z-index: 3000;
-        }
-        
-        #debug-info {
-            position: fixed;
-            top: 50px;
-            right: 10px;
-            padding: 10px;
-            background: rgba(0,0,0,0.8);
-            color: white;
-            border: 1px solid #555;
-            border-radius: 4px;
-            font-family: monospace;
-            font-size: 12px;
-            z-index: 3000;
-            display: none;
-            max-width: 300px;
+        @media (min-width: 769px) {
+            #game-frame {
+                max-width: 800px;
+                height: 800px;
+            }
+            
+            .game-controls {
+                bottom: 40px;
+            }
+            
+            .game-btn {
+                padding: 15px 30px;
+                font-size: 24px;
+                max-width: 150px;
+            }
         }
     </style>
 </head>
 <body>
-    <button id="debug-button">Debug</button>
-    <div id="debug-info"></div>
-    
-    <div id="game-container">
-        <!-- p5.js will create the canvas here -->
-    </div>
+    <!-- Use an iframe to contain the game -->
+    <iframe id="game-frame" src="game.html" frameborder="0" scrolling="no" allowfullscreen></iframe>
     
     <div class="game-controls">
-        <button class="game-btn" id="leftButton" 
-                onmousedown="window.leftPressed = true" 
-                onmouseup="window.leftPressed = false" 
-                onmouseleave="window.leftPressed = false"
-                ontouchstart="window.leftPressed = true; event.preventDefault();" 
-                ontouchend="window.leftPressed = false; event.preventDefault();"
-                ontouchcancel="window.leftPressed = false; event.preventDefault();">
+        <button class="game-btn" id="leftButton">
             ← LEFT
-            <span class="key-hint">← key</span>
         </button>
-        <button class="game-btn" id="rightButton"
-                onmousedown="window.rightPressed = true" 
-                onmouseup="window.rightPressed = false" 
-                onmouseleave="window.rightPressed = false"
-                ontouchstart="window.rightPressed = true; event.preventDefault();" 
-                ontouchend="window.rightPressed = false; event.preventDefault();"
-                ontouchcancel="window.rightPressed = false; event.preventDefault();">
+        <button class="game-btn" id="rightButton">
             RIGHT →
-            <span class="key-hint">→ key</span>
         </button>
-        <button class="game-btn" id="fireButton"
-                onmousedown="window.firePressed = true" 
-                onmouseup="window.firePressed = false" 
-                onmouseleave="window.firePressed = false"
-                ontouchstart="window.firePressed = true; event.preventDefault();" 
-                ontouchend="window.firePressed = false; event.preventDefault();"
-                ontouchcancel="window.firePressed = false; event.preventDefault();">
+        <button class="game-btn" id="fireButton">
             FIRE!
-            <span class="key-hint">SPACE</span>
         </button>
     </div>
     
     <!-- Simple restart button at the bottom center -->
-    <button id="restartButton" onclick="restartGame()">RESTART</button>
+    <button id="restartButton">RESTART</button>
     
     <script>
-        // Add this to prevent scrolling when touching game buttons
+        // Initialize control variables in parent frame
+        window.leftPressed = false;
+        window.rightPressed = false;
+        window.firePressed = false;
+        
+        // Function to send control state to iframe
+        function updateControls() {
+            const gameFrame = document.getElementById('game-frame');
+            if (gameFrame && gameFrame.contentWindow) {
+                gameFrame.contentWindow.postMessage({
+                    leftPressed: window.leftPressed,
+                    rightPressed: window.rightPressed,
+                    firePressed: window.firePressed
+                }, '*');
+            }
+        }
+        
+        // Set up button event listeners
+        document.getElementById('leftButton').addEventListener('mousedown', function() {
+            window.leftPressed = true;
+            updateControls();
+        });
+        document.getElementById('leftButton').addEventListener('mouseup', function() {
+            window.leftPressed = false;
+            updateControls();
+        });
+        document.getElementById('leftButton').addEventListener('mouseleave', function() {
+            window.leftPressed = false;
+            updateControls();
+        });
+        
+        document.getElementById('rightButton').addEventListener('mousedown', function() {
+            window.rightPressed = true;
+            updateControls();
+        });
+        document.getElementById('rightButton').addEventListener('mouseup', function() {
+            window.rightPressed = false;
+            updateControls();
+        });
+        document.getElementById('rightButton').addEventListener('mouseleave', function() {
+            window.rightPressed = false;
+            updateControls();
+        });
+        
+        document.getElementById('fireButton').addEventListener('mousedown', function() {
+            window.firePressed = true;
+            updateControls();
+        });
+        document.getElementById('fireButton').addEventListener('mouseup', function() {
+            window.firePressed = false;
+            updateControls();
+        });
+        document.getElementById('fireButton').addEventListener('mouseleave', function() {
+            window.firePressed = false;
+            updateControls();
+        });
+        
+        // Add touch events
+        document.getElementById('leftButton').addEventListener('touchstart', function(e) {
+            window.leftPressed = true;
+            updateControls();
+            e.preventDefault();
+        });
+        document.getElementById('leftButton').addEventListener('touchend', function(e) {
+            window.leftPressed = false;
+            updateControls();
+            e.preventDefault();
+        });
+        
+        document.getElementById('rightButton').addEventListener('touchstart', function(e) {
+            window.rightPressed = true;
+            updateControls();
+            e.preventDefault();
+        });
+        document.getElementById('rightButton').addEventListener('touchend', function(e) {
+            window.rightPressed = false;
+            updateControls();
+            e.preventDefault();
+        });
+        
+        document.getElementById('fireButton').addEventListener('touchstart', function(e) {
+            window.firePressed = true;
+            updateControls();
+            e.preventDefault();
+        });
+        document.getElementById('fireButton').addEventListener('touchend', function(e) {
+            window.firePressed = false;
+            updateControls();
+            e.preventDefault();
+        });
+        
+        // Restart button
+        document.getElementById('restartButton').addEventListener('click', function() {
+            const gameFrame = document.getElementById('game-frame');
+            if (gameFrame) {
+                gameFrame.contentWindow.postMessage({ restart: true }, '*');
+            }
+        });
+        
+        // Listen for messages from iframe
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.gameState === "game over") {
+                document.getElementById('restartButton').style.display = "block";
+            } else {
+                document.getElementById('restartButton').style.display = "none";
+            }
+        });
+        
+        // Prevent scrolling when touching game buttons
         document.addEventListener('touchmove', function(e) {
             if(e.target.classList.contains('game-btn')) {
                 e.preventDefault();
