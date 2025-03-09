@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=0.5, maximum-scale=0.5, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Baby Turbo vs. The Trenches</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
     
@@ -34,6 +34,23 @@
             }
         }, 500); // Check every half second
         
+        // Debug function to show canvas info
+        function showDebugInfo() {
+            const canvas = document.querySelector('canvas');
+            const debugInfo = document.getElementById('debug-info');
+            
+            if (canvas && debugInfo) {
+                const rect = canvas.getBoundingClientRect();
+                debugInfo.innerHTML = `
+                    <p>Canvas size: ${canvas.width} x ${canvas.height}</p>
+                    <p>Canvas display size: ${rect.width} x ${rect.height}</p>
+                    <p>Canvas position: ${rect.left}, ${rect.top}</p>
+                    <p>Window size: ${window.innerWidth} x ${window.innerHeight}</p>
+                `;
+                debugInfo.style.display = 'block';
+            }
+        }
+        
         // Function to resize the game canvas
         function resizeGame() {
             if (typeof window.resizeCanvas === 'function') {
@@ -41,10 +58,20 @@
                 
                 if (isMobile) {
                     // Use a fixed size for the canvas in p5.js
-                    window.resizeCanvas(400, 400, true);
+                    window.resizeCanvas(300, 300, true);
+                    
+                    // Force the canvas to be small
+                    const canvas = document.querySelector('canvas');
+                    if (canvas) {
+                        canvas.style.width = '300px';
+                        canvas.style.height = '300px';
+                    }
                 } else {
                     window.resizeCanvas(800, 800, true);
                 }
+                
+                // Show debug info
+                setTimeout(showDebugInfo, 100);
             }
         }
         
@@ -54,6 +81,13 @@
             // Call again after a delay to ensure everything is loaded
             setTimeout(resizeGame, 100);
             setTimeout(resizeGame, 500);
+            
+            // Add debug button functionality
+            document.getElementById('debug-button').addEventListener('click', function() {
+                const debugInfo = document.getElementById('debug-info');
+                debugInfo.style.display = debugInfo.style.display === 'none' ? 'block' : 'none';
+                showDebugInfo();
+            });
         });
         
         // Debounce the resize event
@@ -77,65 +111,50 @@
             align-items: center;
             min-height: 100vh;
             background-color: #222;
-            position: fixed;
+            position: relative;
             width: 100%;
             height: 100%;
-            overflow: hidden;
-            touch-action: none;
+            overflow: auto;
+            touch-action: manipulation;
         }
         
         #game-container {
             position: relative;
             display: flex;
             justify-content: center;
-            align-items: flex-start;
+            align-items: center;
             width: 100%;
-            height: calc(100vh - 150px);
-            margin-top: 10px;
+            height: auto;
+            margin: 20px 0;
         }
         
         .frame-wrapper {
-            position: fixed;
-            top: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 90%;
-            max-width: 900px;
-            height: 100vh;
-            background-color: #333;
-            border-radius: 10px;
-            z-index: 0;
+            display: none;
         }
         
         canvas {
             display: block;
             margin: 0 auto;
-            width: auto !important;
-            height: auto !important;
-            max-width: 100% !important;
-            max-height: calc(100vh - 200px) !important;
-            object-fit: contain;
+            border: 2px solid #444;
         }
         
         .game-controls {
             position: fixed;
             bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
+            left: 0;
+            right: 0;
             display: flex;
-            gap: 20px;
+            gap: 10px;
             padding: 10px;
-            background: transparent;
-            border-radius: 10px;
+            background: rgba(0,0,0,0.7);
             z-index: 1000;
-            width: 90%;
-            max-width: 500px;
-            justify-content: space-between;
+            width: 100%;
+            justify-content: center;
         }
         
         .game-btn {
-            padding: 15px 30px;
-            font-size: 24px;
+            padding: 10px 20px;
+            font-size: 18px;
             background: #444;
             border: 3px solid #666;
             color: white;
@@ -144,19 +163,14 @@
             user-select: none;
             transition: all 0.1s;
             position: relative;
-            touch-action: manipulation; /* Improve touch behavior */
+            touch-action: manipulation;
             flex: 1;
+            max-width: 120px;
             text-align: center;
-        }
-        
-        .game-btn:hover {
-            background: #555;
-            transform: translateY(-2px);
         }
         
         .game-btn:active {
             background: #666;
-            transform: translateY(1px);
         }
         
         #fireButton {
@@ -164,105 +178,63 @@
             border-color: #883333;
         }
         
-        #fireButton:hover {
-            background: #773333;
-        }
-        
         #fireButton:active {
             background: #884444;
         }
         
         .key-hint {
-            position: absolute;
-            bottom: -20px;
-            left: 0;
-            right: 0;
-            text-align: center;
-            font-size: 12px;
-            color: #aaa;
+            display: none;
         }
         
         #restartButton {
             position: fixed;
-            bottom: 20px;
+            bottom: 80px;
             left: 50%;
             transform: translateX(-50%);
-            padding: 15px 30px;
-            font-size: 24px;
+            padding: 10px 20px;
+            font-size: 18px;
             background: #4CAF50;
             border: 3px solid #45a049;
             color: white;
             border-radius: 8px;
             cursor: pointer;
             z-index: 2000;
-            display: none; /* Hidden by default */
+            display: none;
         }
         
-        #restartButton:hover {
-            background: #45a049;
+        #debug-button {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 5px 10px;
+            background: #333;
+            color: white;
+            border: 1px solid #555;
+            border-radius: 4px;
+            z-index: 3000;
         }
         
-        /* Media queries for responsive design */
-        @media (max-width: 768px) {
-            .frame-wrapper {
-                display: none;
-            }
-            
-            .game-controls {
-                bottom: 10px;
-                gap: 10px;
-                z-index: 2000;
-                padding: 5px;
-            }
-            
-            .game-btn {
-                padding: 15px;
-                font-size: 18px;
-            }
-            
-            .key-hint {
-                display: none;
-            }
-            
-            #game-container {
-                height: auto;
-                margin: 0;
-                padding: 0;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-            }
-            
-            canvas {
-                margin: 0 auto !important;
-            }
-        }
-
-        @media (min-width: 769px) {
-            .game-controls {
-                bottom: 40px;
-                z-index: 2000;
-            }
-            
-            #game-container {
-                height: calc(100vh - 180px);
-                margin-bottom: 0;
-                margin-top: 20px;
-                position: relative;
-                z-index: 1000;
-            }
-            
-            canvas {
-                max-height: calc(100vh - 200px) !important;
-                margin-bottom: 120px;
-                position: relative;
-                z-index: 1000;
-            }
+        #debug-info {
+            position: fixed;
+            top: 50px;
+            right: 10px;
+            padding: 10px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            border: 1px solid #555;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            z-index: 3000;
+            display: none;
+            max-width: 300px;
         }
     </style>
 </head>
 <body>
-    <div class="frame-wrapper"></div>
+    <button id="debug-button">Debug</button>
+    <div id="debug-info"></div>
+    
     <div id="game-container">
         <!-- p5.js will create the canvas here -->
     </div>
