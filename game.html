@@ -24,76 +24,14 @@
             margin: 0 auto !important;
             width: 100% !important;
             height: 100% !important;
+            max-width: 100% !important;
+            max-height: 100% !important;
             object-fit: contain !important;
-        }
-        
-        @media (max-width: 768px) {
-            canvas {
-                max-width: 400px !important;
-                max-height: 400px !important;
-            }
-        }
-        
-        @media (min-width: 769px) {
-            canvas {
-                max-width: 800px !important;
-                max-height: 800px !important;
-            }
-        }
-        
-        #debug-button {
-            position: fixed;
-            top: 10px;
-            right: 10px;
-            padding: 5px 10px;
-            background: #333;
-            color: white;
-            border: 1px solid #555;
-            border-radius: 4px;
-            z-index: 3000;
-        }
-        
-        #debug-info {
-            position: fixed;
-            top: 50px;
-            right: 10px;
-            padding: 10px;
-            background: rgba(0,0,0,0.8);
-            color: white;
-            border: 1px solid #555;
-            border-radius: 4px;
-            font-family: monospace;
-            font-size: 12px;
-            z-index: 3000;
-            display: none;
-            max-width: 300px;
         }
     </style>
 </head>
 <body>
-    <button id="debug-button">Debug</button>
-    <div id="debug-info"></div>
-    
     <script>
-        // Debug function to show canvas info
-        function showDebugInfo() {
-            const canvas = document.querySelector('canvas');
-            const debugInfo = document.getElementById('debug-info');
-            
-            if (canvas && debugInfo) {
-                const rect = canvas.getBoundingClientRect();
-                debugInfo.innerHTML = `
-                    <p>Canvas size: ${canvas.width} x ${canvas.height}</p>
-                    <p>Canvas display size: ${rect.width} x ${rect.height}</p>
-                    <p>Canvas position: ${rect.left}, ${rect.top}</p>
-                    <p>Window size: ${window.innerWidth} x ${window.innerHeight}</p>
-                    <p>Device pixel ratio: ${window.devicePixelRatio}</p>
-                    <p>Is mobile: ${window.innerWidth < 768}</p>
-                `;
-                debugInfo.style.display = 'block';
-            }
-        }
-        
         // Control variables that will be updated from parent frame
         window.leftPressed = false;
         window.rightPressed = false;
@@ -128,45 +66,28 @@
         // Check game state periodically
         setInterval(updateGameState, 500);
         
-        // Override createCanvas to force a specific size based on device
+        // Override createCanvas to force a specific size based on screen size
         window.originalCreateCanvas = window.createCanvas;
         window.createCanvas = function() {
             const isMobile = window.innerWidth < 768;
-            if (isMobile) {
-                return window.originalCreateCanvas(400, 400);
-            } else {
-                return window.originalCreateCanvas(800, 800);
-            }
+            const size = isMobile ? 400 : 800;
+            return window.originalCreateCanvas(size, size);
         };
         
         // Function to resize the game canvas
         function resizeGame() {
             if (typeof window.resizeCanvas === 'function') {
                 const isMobile = window.innerWidth < 768;
+                const size = isMobile ? 400 : 800;
                 
-                if (isMobile) {
-                    window.resizeCanvas(400, 400, true);
-                } else {
-                    window.resizeCanvas(800, 800, true);
-                }
+                window.resizeCanvas(size, size, true);
                 
                 // Force the canvas size with CSS
                 const canvas = document.querySelector('canvas');
                 if (canvas) {
                     canvas.style.width = '100%';
                     canvas.style.height = '100%';
-                    
-                    if (isMobile) {
-                        canvas.style.maxWidth = '400px';
-                        canvas.style.maxHeight = '400px';
-                    } else {
-                        canvas.style.maxWidth = '800px';
-                        canvas.style.maxHeight = '800px';
-                    }
                 }
-                
-                // Update debug info
-                setTimeout(showDebugInfo, 100);
             }
         }
         
@@ -176,13 +97,6 @@
             setTimeout(resizeGame, 100);
             setTimeout(resizeGame, 500);
             setTimeout(resizeGame, 1000);
-            
-            // Add debug button functionality
-            document.getElementById('debug-button').addEventListener('click', function() {
-                const debugInfo = document.getElementById('debug-info');
-                debugInfo.style.display = debugInfo.style.display === 'none' ? 'block' : 'none';
-                showDebugInfo();
-            });
         });
         
         // Debounce the resize event
